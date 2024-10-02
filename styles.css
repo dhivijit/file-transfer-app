@@ -1,0 +1,276 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    user-select: none;
+}
+
+body {
+    background-color: #f0f2f5;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    z-index: 10;
+}
+
+.main-container {
+    text-align: center;
+}
+
+.main-container h1 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.main-container .magnifying-glass {
+    margin-bottom: 20px;
+}
+
+.main-container .search-btn {
+    margin-bottom: 10px;
+    padding: 12px 20px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.main-container .search-btn:hover {
+    background-color: #0056b3;
+}
+
+.main-container .hide-btn {
+    margin-bottom: 20px;
+    padding: 12px 20px;
+    background-color: #6c757d;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.main-container .hide-btn:hover {
+    background-color: #5a6268;
+}
+
+.main-container .listbox {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    display: none;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.main-container .listbox ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.main-container .listbox ul li {
+    padding: 8px 10px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.main-container .listbox ul li:hover {
+    background-color: #f0f2f5;
+}
+
+.keys-card {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    max-width: 300px;
+    width: 100%;
+    opacity: 0;
+    transform: rotateY(-90deg);
+    transform-origin: right;
+    transition: all 0.5s ease-in-out;
+}
+
+.keys-card.active {
+    opacity: 1;
+    transform: rotateY(0deg);
+}
+
+.keys-card h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-weight: 500;
+}
+
+.form-group input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    border: 2px dashed #ccc;
+    border-radius: 4px;
+    text-align: center;
+    cursor: pointer;
+    color: #999;
+    transition: border-color 0.3s;
+}
+
+.form-group input[type="file"]:hover {
+    border-color: #888;
+}
+
+.buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.buttons button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    width: 100%;
+    color: #fff;
+    transition: background-color 0.3s;
+}
+
+.buttons .generate-btn {
+    background-color: #28a745;
+}
+
+.buttons .generate-btn:hover {
+    background-color: #218838;
+}
+
+.toggle-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #007bff;
+    color: #fff;
+    padding: 15px 20px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s;
+}
+
+.toggle-btn:hover {
+    background-color: #0056b3;
+}
+
+.item-info-card {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    max-width: 300px;
+    width: 100%;
+    display: none;
+    z-index: 20;
+}
+
+.item-info-card h3 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.item-info-card p {
+    color: #555;
+}
+
+.item-info-card .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #333;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.item-info-card .close-btn:hover {
+    color: #007bff;
+}
+
+.save-btn {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#keyClearBtn {
+    padding: 1px 5px 1px 5px;
+    background-color: red;
+    border-radius: 10px;
+    color: white;
+    transition: 0.2s;
+}
+
+#keyClearBtn:hover {
+    background-color: darkred;
+    /* color: black; */
+    
+}
+
+.close-key-btn {
+    background-color: transparent;
+    border: none;
+    color: red; /* Change color as needed */
+    font-size: 30px;
+    cursor: pointer;
+    margin-left: 35%;
+}
+
+.close-key-btn:hover {
+    color: darkred; /* Change hover color if needed */
+}

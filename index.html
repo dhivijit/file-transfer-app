@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>File Transfer App</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <div class="overlay" id="overlay"></div>
+
+    <div class="main-container">
+        <h1>Secure File Transfer</h1>
+        <div class="magnifying-glass">
+            <img src="blockchain.png" style="height: 150px;user-select: none;" alt="BlockChain Image">
+        </div>
+        <button class="search-btn" id="search-btn">Search Items</button>
+        <button class="hide-btn" id="hide-btn" style="display:none;transform: translateX(-50%);margin-left: 50%;">Hide
+            Listbox</button>
+        <div class="listbox" id="listbox">
+            <ul id="listbox-items"></ul>
+        </div>
+    </div>
+
+    <div class="keys-card" id="keys-card">
+        <h2>Manage Keys <button class="close-key-btn" id="close-key-btn">&times;</button></h2>
+        <p id="keycheck" style="display: none;">Keys already stored <button id="keyClearBtn">Clear ?</button></p>
+        <div class="form-group">
+            <label for="private-key">Upload Private Key:</label>
+            <input type="file" id="private-key" accept=".pem">
+        </div>
+        <div class="form-group">
+            <label for="public-key">Upload Public Key:</label>
+            <input type="file" id="public-key" accept=".pem">
+        </div>
+        <div class="buttons">
+            <button id="keySavebtn" class="save-btn">Save Keys</button>
+        </div>
+        <div style="margin: 20px 0;">OR</div>
+        <div class="buttons">
+            <button id="KeyGenerateBtn" class="generate-btn">Generate Keys</button>
+        </div>
+    </div>
+
+    <button class="toggle-btn" id="toggle-btn">Manage Keys</button>
+
+    <div class="item-info-card" id="item-info-card">
+        <button class="close-btn" id="close-btn">&times;</button>
+        <h3>Item Information</h3>
+        <p id="item-info">Details about the selected item will appear here.</p>
+    </div>
+
+    <script>
+        const toggleBtn = document.getElementById('toggle-btn');
+        const keyCloseBtn = document.getElementById('close-key-btn');
+        const keysCard = document.getElementById('keys-card');
+        const searchBtn = document.getElementById('search-btn');
+        const hideBtn = document.getElementById('hide-btn');
+        const listbox = document.getElementById('listbox');
+        const listboxItems = document.getElementById('listbox-items');
+        const itemInfoCard = document.getElementById('item-info-card');
+        const itemInfo = document.getElementById('item-info');
+        const overlay = document.getElementById('overlay');
+        const closeBtn = document.getElementById('close-btn');
+        
+        toggleBtn.addEventListener('click', () => {
+            keysCard.classList.toggle('active');
+            toggleBtn.style.backgroundColor = keysCard.classList.contains('active') ? '#0056b3' : '#007bff';
+        });
+
+        keyCloseBtn.addEventListener('click', () => {
+            keysCard.classList.remove('active');
+            toggleBtn.style.backgroundColor = keysCard.classList.contains('active') ? '#0056b3' : '#007bff';
+        });
+
+        searchBtn.addEventListener('click', () => {
+            const items = ['File 1', 'File 2', 'File 3', 'File 4', 'File 5'];
+
+            listboxItems.innerHTML = '';
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                listboxItems.appendChild(li);
+
+                li.addEventListener('click', () => {
+                    itemInfo.textContent = `Details about ${item}.`;
+                    itemInfoCard.style.display = 'block';
+                    overlay.style.display = 'block';
+                });
+            });
+
+            listbox.style.display = 'block';
+            hideBtn.style.display = 'block';
+        });
+
+        hideBtn.addEventListener('click', () => {
+            listbox.style.display = 'none';
+            itemInfoCard.style.display = 'none';
+            overlay.style.display = 'none';
+            hideBtn.style.display = 'none';
+        });
+
+        closeBtn.addEventListener('click', () => {
+            itemInfoCard.style.display = 'none';
+            overlay.style.display = 'none';
+        });
+
+        overlay.addEventListener('click', () => {
+            itemInfoCard.style.display = 'none';
+            overlay.style.display = 'none';
+        });
+    </script>
+    <script src="renderer.js"></script>
+
+</body>
+
+</html>
