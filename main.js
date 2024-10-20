@@ -1,6 +1,8 @@
 const { app, BrowserWindow, ipcMain, Menu, dialog } = require('electron');
 const path = require("path");
 const fs = require("fs");
+const dotenv = require("dotenv");
+dotenv.config();
 
 const keyGen = require("./generateKeys");
 
@@ -89,7 +91,7 @@ ipcMain.handle('show-alert', async (event, { title, message }) => {
         parent: win,
         modal: true
     };
-    
+
     await dialog.showMessageBox(options);
     win.focus();
     win.setEnabled(true);
@@ -120,7 +122,8 @@ ipcMain.handle('generate-keys', async () => {
 });
 
 ipcMain.handle('save-files', async (event, files) => {
-    const keysDirectory = path.join(__dirname, 'keys');
+    const userDir = app.getPath('userData');
+    const keysDirectory = path.join(userDir, 'keys');
     if (!fs.existsSync(keysDirectory)) {
         fs.mkdirSync(keysDirectory);
     }
@@ -138,7 +141,8 @@ ipcMain.handle('save-files', async (event, files) => {
 });
 
 ipcMain.handle('key-check', async () => {
-    const keysDirectory = path.join(__dirname, 'keys');
+    const userDir = app.getPath('userData');
+    const keysDirectory = path.join(userDir, 'keys');
     const privateKeyFile = path.join(keysDirectory, 'private_key.pem');
     const publicKeyFile = path.join(keysDirectory, 'public_key.pem');
 
@@ -154,7 +158,8 @@ ipcMain.handle('key-check', async () => {
 });
 
 ipcMain.handle('delete-keys', async () => {
-    const keysDirectory = path.join(__dirname, 'keys');
+    const userDir = app.getPath('userData');
+    const keysDirectory = path.join(userDir, 'keys');
     const privateKeyFile = path.join(keysDirectory, 'private_key.pem');
     const publicKeyFile = path.join(keysDirectory, 'public_key.pem');
 

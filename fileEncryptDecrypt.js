@@ -1,24 +1,38 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { app }=require('electron');
 
-const keysDir = path.join(__dirname, 'keys');
+const userDir = app.getPath('userData');
+const keysDir = path.join(userDir, 'keys');
 
-// Read the public and private keys
 const publicKey = fs.readFileSync(path.join(keysDir, 'public_key.pem'), { encoding: 'utf-8' });
 const privateKey = fs.readFileSync(path.join(keysDir, 'private_key.pem'), { encoding: 'utf-8' });
 
-// Main function to process the file for encryption
+/**
+ * Encrypts a file using RSA public key encryption.
+ *
+ * @param {string} inputFilePath - The path to the input file to be encrypted.
+ * @param {string} outputFilePath - The path where the encrypted file will be saved.
+ *
+ * @throws Will throw an error if there is an issue reading the input file or writing the encrypted data.
+ *
+ * @example
+ * encryptFile('path/to/input.txt', 'path/to/output.enc');
+ *
+ * @description
+ * This function reads the input file in chunks and encrypts each chunk using the provided RSA public key.
+ * The encrypted data is then written to the output file. The function handles errors during the read and write
+ * processes and logs them to the console.
+ */
 function encryptFile(inputFilePath, outputFilePath) {
-    const chunkSize = 446; // Reduced chunk size to fit encryption with padding
+    const chunkSize = 446;
 
-    // Create read and write streams
     const readStream = fs.createReadStream(inputFilePath, { highWaterMark: chunkSize });
     const writeStream = fs.createWriteStream(outputFilePath);
 
     readStream.on('data', (chunk) => {
         try {
-            // Encrypt the chunk
             const encryptedData = crypto.publicEncrypt(
                 {
                     key: publicKey,
@@ -28,7 +42,6 @@ function encryptFile(inputFilePath, outputFilePath) {
                 chunk
             );
 
-            // Write the encrypted chunk to the output file
             writeStream.write(encryptedData);
         } catch (err) {
             console.error('Error during encryption:', err.message);
@@ -49,17 +62,29 @@ function encryptFile(inputFilePath, outputFilePath) {
     });
 }
 
-// Function to decrypt the file
+/**
+ * Decrypts a file using RSA private key decryption.
+ *
+ * @param {string} inputFilePath - The path to the encrypted input file.
+ * @param {string} outputFilePath - The path to the decrypted output file.
+ *
+ * @throws Will throw an error if there is an issue reading the input file or writing to the output file.
+ *
+ * @example
+ * decryptFile('path/to/encrypted/file', 'path/to/decrypted/file');
+ *
+ * @description
+ * This function reads an encrypted file in chunks, decrypts each chunk using a provided RSA private key,
+ * and writes the decrypted data to an output file. It handles errors during the read, write, and decryption processes.
+ */
 function decryptFile(inputFilePath, outputFilePath) {
-    const chunkSize = 512; // Encrypted chunk size
+    const chunkSize = 512;
 
-    // Create read and write streams
     const readStream = fs.createReadStream(inputFilePath, { highWaterMark: chunkSize });
     const writeStream = fs.createWriteStream(outputFilePath);
 
     readStream.on('data', (chunk) => {
         try {
-            // Decrypt the chunk
             const decryptedData = crypto.privateDecrypt(
                 {
                     key: privateKey,
@@ -69,7 +94,6 @@ function decryptFile(inputFilePath, outputFilePath) {
                 chunk
             );
 
-            // Write the decrypted chunk to the output file
             writeStream.write(decryptedData);
         } catch (err) {
             console.error('Error during decryption:', err.message);
@@ -90,15 +114,13 @@ function decryptFile(inputFilePath, outputFilePath) {
     });
 }
 
-// File paths for encryption and decryption
-const inputFilePath = path.join(__dirname, 'sourcefile.txt'); // Original file
+const inputFilePath = path.join(__dirname, 'sourcefile.txt');
 const encryptedFolder = path.join(__dirname, 'encrypted');
-const encryptedFilePath = path.join(encryptedFolder, '20240604.jpg'); // Encrypted file
+const encryptedFilePath = path.join(encryptedFolder, '20240604.jpg');
 
 const decryptedFolder = path.join(__dirname, 'decrypted');
-const decryptedFilePath = path.join(decryptedFolder, '20240604_decrypted.jpg'); // Decrypted file
+const decryptedFilePath = path.join(decryptedFolder, '20240604_decrypted.jpg');
 
-// Ensure the encrypted and decrypted directories exist
 if (!fs.existsSync(encryptedFolder)) {
     fs.mkdirSync(encryptedFolder);
 }
@@ -106,8 +128,8 @@ if (!fs.existsSync(decryptedFolder)) {
     fs.mkdirSync(decryptedFolder);
 }
 
-// Start encryption
 // encryptFile(inputFilePath, encryptedFilePath);
 
-// After encryption, you can call the decryption function
-decryptFile(encryptedFilePath, decryptedFilePath);
+// decryptFile(encryptedFilePath, decryptedFilePath);
+
+module.exports = { encryptFile, decryptFile };
