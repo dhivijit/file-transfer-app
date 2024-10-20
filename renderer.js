@@ -86,3 +86,106 @@ document.querySelector("#keyClearBtn").addEventListener("click", async () => {
 
     keyVerifier();
 });
+
+document.querySelector("#encrypt-btn").addEventListener("click", async () => {
+    document.querySelector("#statusdiv").style.display = "block";
+    const statusBox = document.querySelector("#currStatus");
+
+    statusBox.innerHTML = "Starting Up...";
+
+    const publicKeyUpload = document.querySelector("#public-key-upload");
+    const fileUploaded = document.querySelector("#file-upload")
+    const userMessage = document.querySelector("#message-input");
+
+    fileArray = []
+    const publicKeyUploadFile = publicKeyUpload.files[0];
+    const fileUploadedFile = fileUploaded.files[0];
+
+    if (publicKeyUploadFile) {
+        fileArray.push({
+            name: publicKeyUploadFile.name,
+            path: publicKeyUploadFile.path
+
+        });
+        if (!publicKeyUploadFile.name.endsWith(".pem")) {
+            showCustomAlert("Error", "Please upload a .pem file");
+            statusBox.innerHTML = "Please upload a .pem file";
+            return;
+        }
+    }
+
+    if (fileUploadedFile) {
+        fileArray.push({
+            name: fileUploadedFile.name,
+            path: fileUploadedFile.path
+        })
+        if (fileUploadedFile.name.endsWith(".pem")) {
+            showCustomAlert("Error", "The uploaded file cannot be a .pem file");
+            statusBox.innerHTML = "The uploaded file cannot be a .pem file";
+            return;
+        }
+    }
+
+    if (fileArray.length < 2) {
+        showCustomAlert("Error", "Please select both files to encrypt");
+        statusBox.innerHTML = "Please select both files to start the operation";
+        return;
+    }
+
+    const result = await window.electronAPI.SaveUserFiles(fileArray);
+
+    if (!result.success) {
+        showCustomAlert("Error", "Error saving files: " + result.message);
+        statusBox.innerHTML = "Error saving files: " + result.message;
+        return;
+    }
+
+    statusBox.innerHTML = "Files saved successfully";
+
+    const encryptResult = await window.electronAPI.encryptFile();
+
+    if (!encryptResult.success) {
+        showCustomAlert("Error", "Error encrypting file: " + encryptResult.message);
+        statusBox.innerHTML = "Error encrypting file: " + encryptResult.message;
+        return;
+    }
+
+    statusBox.innerHTML = "File encrypted successfully";
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    statusBox.innerHTML = "Please wait, Uploading file to IPFS...";
+
+    const uploadResult = await window.electronAPI.uploadFiletoIPFS();
+
+    if (!uploadResult.success) {
+        showCustomAlert("Error", "Error uploading file: " + uploadResult.message);
+        statusBox.innerHTML = "Error uploading file: " + uploadResult.message;
+        return;
+    }
+
+    statusBox.innerHTML = "File uploaded successfully";
+
+    const link = uploadResult.finalLink;
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    statusBox.innerHTML = "Notifying target user...";
+
+    const mongoResult = await window.electronAPI.mongoDbupload(link, userMessage.value);
+
+    if (!mongoResult.success) {
+        showCustomAlert("Error", "Error notifying user: " + mongoResult.message);
+        statusBox.innerHTML = "Error notifying user: " + mongoResult.message;
+        return;
+    }
+
+    statusBox.innerHTML = "User notified successfully";
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    statusBox.innerHTML = "Operation completed successfully";
+
+    publicKeyUpload.value = "";
+    fileUploaded.value = "";
+    userMessage.value = "";
+
+    await window.electronAPI.cleanDir();
+});

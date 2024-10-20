@@ -55,6 +55,28 @@
         <p id="item-info">Details about the selected item will appear here.</p>
     </div>
 
+    <div class="upload-container" id="upload-container">
+        <button class="close-upload-btn" id="close-upload-btn">&times;</button>
+        <h2>Upload Files for Transfer</h2>
+        <div class="form-group">
+            <label for="public-key-upload">Upload Target's Public Key (.pem):</label>
+            <input type="file" id="public-key-upload" accept=".pem">
+        </div>
+        <div class="form-group">
+            <label for="message-input">Message (optional):</label>
+            <textarea id="message-input" rows="4" placeholder="Enter your message"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="file-upload">Upload File (any type):</label>
+            <input type="file" id="file-upload">
+        </div>
+        <div id="statusdiv">Status: <span id="currStatus"></span></div>
+        <div class="buttons">
+            <button id="encrypt-btn" class="encrypt-btn">Encrypt & Upload</button>
+        </div>
+    </div>
+
+
     <script>
         const toggleBtn = document.getElementById('toggle-btn');
         const keyCloseBtn = document.getElementById('close-key-btn');
@@ -67,17 +89,83 @@
         const itemInfo = document.getElementById('item-info');
         const overlay = document.getElementById('overlay');
         const closeBtn = document.getElementById('close-btn');
-        
+
+        const uploadBtn = document.getElementById('upload-btn');
+        const uploadContainer = document.getElementById('upload-container');
+        const closeUploadBtn = document.getElementById('close-upload-btn');
+
+        let activeModal = null; // Track which modal is active
+
+        // Toggle the "Manage Keys" box
         toggleBtn.addEventListener('click', () => {
             keysCard.classList.toggle('active');
             toggleBtn.style.backgroundColor = keysCard.classList.contains('active') ? '#0056b3' : '#007bff';
+            overlay.style.display = keysCard.classList.contains('active') ? 'block' : 'none';
+            activeModal = keysCard.classList.contains('active') ? 'keys' : null;
         });
 
+        // Close the "Manage Keys" box
         keyCloseBtn.addEventListener('click', () => {
             keysCard.classList.remove('active');
-            toggleBtn.style.backgroundColor = keysCard.classList.contains('active') ? '#0056b3' : '#007bff';
+            toggleBtn.style.backgroundColor = '#007bff';
+            overlay.style.display = 'none';
+            activeModal = null;
         });
 
+        // Upload file modal open
+        uploadBtn.addEventListener('click', () => {
+            uploadContainer.style.display = 'block'; // Ensure it's visible
+            setTimeout(() => {
+                uploadContainer.classList.add('active'); // Trigger the transition
+            }, 10); // Slight delay to allow the element to become visible
+            overlay.style.display = 'block';
+            activeModal = 'upload'; // Track that upload modal is active
+        });
+
+        // Close the Upload file modal
+        closeUploadBtn.addEventListener('click', closeUploadModal);
+
+        function closeUploadModal() {
+            uploadContainer.classList.remove('active');
+            setTimeout(() => {
+                uploadContainer.style.display = 'none'; // Hide after transition
+            }, 400); // Match this delay with the CSS transition duration
+            overlay.style.display = 'none';
+            activeModal = null; // No active modal
+        }
+
+        // Close modals when clicking outside (on overlay)
+        document.addEventListener('click', (event) => {
+            const isClickInsideKeysCard = keysCard.contains(event.target) || toggleBtn.contains(event.target);
+            const isClickInsideUploadContainer = uploadContainer.contains(event.target) || uploadBtn.contains(event.target);
+
+            // Close the "Manage Keys" box if it's active and clicked outside
+            if (activeModal === 'keys' && !isClickInsideKeysCard) {
+                keysCard.classList.remove('active');
+                toggleBtn.style.backgroundColor = '#007bff';
+                overlay.style.display = 'none';
+                activeModal = null;
+            }
+
+            // Close the "Upload File" modal if it's active and clicked outside
+            if (activeModal === 'upload' && !isClickInsideUploadContainer) {
+                closeUploadModal();
+            }
+        });
+
+        // Close modals when clicking the overlay (if needed)
+        overlay.addEventListener('click', () => {
+            if (activeModal === 'keys') {
+                keysCard.classList.remove('active');
+                toggleBtn.style.backgroundColor = '#007bff';
+            } else if (activeModal === 'upload') {
+                closeUploadModal();
+            }
+            overlay.style.display = 'none';
+            activeModal = null;
+        });
+
+        // Additional event listeners for the search functionality
         searchBtn.addEventListener('click', () => {
             const items = ['File 1', 'File 2', 'File 3', 'File 4', 'File 5'];
 
@@ -115,6 +203,7 @@
             overlay.style.display = 'none';
         });
     </script>
+
     <script src="renderer.js"></script>
 
 </body>

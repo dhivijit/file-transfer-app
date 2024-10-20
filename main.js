@@ -6,9 +6,25 @@ dotenv.config();
 const crypto = require("crypto");
 
 const keyGen = require("./functions/generateKeys");
+const { encryptFile, decryptFile } = require("./functions/fileEncryptDecrypt");
+const IPFSUploader = require("./functions/web3storageinteractor");
+const { newUploadUpdater } = require("./functions/dbinteractor");
+const hashPublicKey = require("./functions/keyhasher");
+const clearDirectory = require("./functions/dircleaner");
 
 let aboutWindow;
 let win;
+
+const userDir = app.getPath('userData');
+
+if (!fs.existsSync(userDir)) {
+    fs.mkdirSync(userDir);
+}
+
+const tempDir = path.join(userDir, 'temp');
+if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir);
+}
 
 const createWindow = () => {
     win = new BrowserWindow({
@@ -124,7 +140,6 @@ ipcMain.handle('generate-keys', async () => {
 
 function validateKeys() {
     try {
-        const userDir = app.getPath('userData');
         const keysDir = path.join(userDir, 'keys');
 
         const testPrivateKey = Buffer.from(
@@ -242,6 +257,89 @@ ipcMain.handle('delete-keys', async () => {
         return { success: false, message: err.message };
     }
 });
+
+
+
+ipcMain.handle("SaveUserFiles", async (event, files) => {
+    try {
+        for (const file of files) {
+            const sourceFilePath = file.path;
+            const destinationFilePath = path.join(tempDir, file.name);
+            await fs.promises.copyFile(sourceFilePath, destinationFilePath);
+        }
+
+        return { success: true, message: 'Files saved successfully.' };
+    } catch (err) {
+        return { success: false, message: err.message };
+    }
+});
+
+ipcMain.handle("encrypt-file", async () => {
+    try {
+        // let receiverPublicKeyPath;
+        // let filetoEncryptPath;
+
+        // .pem file in the temp directory becomes receiverPublicKeyPath
+        // the remaining file in the temp directory becomes filetoEncryptPath
+        const files = fs.readdirSync(tempDir);
+        let receiverPublicKeyPath;
+        let filetoEncryptPath;
+        for (const file of files) {
+            if (file.endsWith('.pem')) {
+                receiverPublicKeyPath = path.join(tempDir, file);
+            } else {
+                filetoEncryptPath = path.join(tempDir, file);
+            }
+        }
+
+        const output = await encryptFile(filetoEncryptPath, filetoEncryptPath + '.enc', fs.readFileSync(receiverPublicKeyPath, { encoding: 'utf-8' }));
+
+        return output;
+    } catch (err) {
+        return { success: false, message: err.message };
+    }
+})
+
+ipcMain.handle("uploadFiletoIPFS", async () => {
+    // check for .enc file in the temp directory and upload it using the IPFSUploader function
+    const files = fs.readdirSync(tempDir);
+    let filetoUploadPath;
+    let fileName
+    for (const file of files) {
+        if (file.endsWith('.enc')) {
+            filetoUploadPath = path.join(tempDir, file);
+            fileName = file;
+        }
+    }
+
+    const result = await IPFSUploader(filetoUploadPath);
+    if (result.success) {
+        const finalLink = "https://" + result.directoryCid + ".ipfs.w3s.link/" + fileName;
+        console.log(result);
+        console.log(finalLink);
+        return { finalLink, ...result };
+    } else {
+        return result;
+    }
+});
+
+ipcMain.handle("mongoDbupload", async (event, link, message) => {
+
+    console.log(link, message)
+    const receiverPublicKeyPath = fs.readdirSync(tempDir).filter(file => file.endsWith('.pem'))[0];
+    const receiverHash = hashPublicKey(path.join(tempDir, receiverPublicKeyPath));
+    const senderHash = hashPublicKey(path.join(userDir, 'keys', 'public_key.pem'));
+    console.log(link, )
+
+    const result = await newUploadUpdater(senderHash, receiverHash, link, message);
+    console.log(result);
+
+    return result;
+});
+
+ipcMain.handle("cleanDir", async () => {
+    return clearDirectory(tempDir);
+})
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();

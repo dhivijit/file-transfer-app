@@ -18,4 +18,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     deleteKeys: () => ipcRenderer.invoke('delete-keys'),
     alertInvoke: (data) => ipcRenderer.invoke('show-alert', data),
     promptInvoke: (data) => ipcRenderer.invoke('show-prompt', data),
+    SaveUserFiles: (files) => ipcRenderer.invoke('SaveUserFiles', files),
+    encryptFile: (file) => ipcRenderer.invoke('encrypt-file'),
+    uploadFiletoIPFS: () => ipcRenderer.invoke('uploadFiletoIPFS'),
+    mongoDbupload: (link, message) => ipcRenderer.invoke('mongoDbupload', link, message),
+    cleanDir: () => ipcRenderer.invoke('cleanDir'),
 });

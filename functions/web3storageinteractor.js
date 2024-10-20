@@ -22,37 +22,45 @@ async function initializeModules() {
 }
 
 // Main function to run the logic after modules are initialized
-async function main() {
+/**
+ * Uploads a file to IPFS using Web3.Storage.
+ *
+ * @async
+ * @function IPFSUploader
+ * @param {string} uploadFilePath - The path of the file to be uploaded.
+ * @returns {Promise<Object>} - A promise that resolves to an object containing the success status, message, and directory CID.
+ * @throws {Error} - Throws an error if the upload process fails.
+ *
+ * @example
+ * const result = await IPFSUploader('/path/to/file.txt');
+ * if (result.success) {
+ *   console.log('Upload successful:', result.directoryCid);
+ * } else {
+ *   console.error('Upload failed:', result.message);
+ * }
+ */
+async function IPFSUploader(uploadFilePath) {
   try {
-    // Initialize the dynamic imports
     await initializeModules();
 
-    // Load client with specific private key from environment
     const principal = Signer.parse(process.env.KEY);
     const store = new StoreMemory();
     const client = await Client.create({ principal, store });
 
-    // Add proof that this agent has been delegated capabilities on the space
     const proof = await Proof.parse(process.env.PROOF);
     const space = await client.addSpace(proof);
     await client.setCurrentSpace(space.did());
 
-    // READY to go!
-
-    // Example of uploading files (you can uncomment this part if needed)
-    const myImg = "./files/20241005.jpg";
-    const files = await filesFromPaths([myImg]);
+    const files = await filesFromPaths([uploadFilePath]);
     const directoryCid = await client.uploadDirectory(files);
-    console.log(`Directory CID: ${directoryCid}`);
 
-    // Listing uploaded files
-    // const listed = await client.capability.upload.list({ cursor: '', size: 25 });
-    // console.log("The list of files: ", JSON.stringify(listed, null, 2));
+    return { success: true, message: 'Files uploaded successfully.', directoryCid };
 
   } catch (error) {
     console.error('Error occurred:', error);
+    return { success: false, message: 'Error uploading files: ' + error.message };
   }
 }
 
-// Execute the main function
-main();
+
+module.exports = IPFSUploader;

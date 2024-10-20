@@ -15,13 +15,16 @@ const client = new MongoClient(uri);
  * @param {string} from - The sender of the file.
  * @param {string} to - The recipient of the file.
  * @param {string} fileURL - The URL of the file being transferred.
+ * @param {string} message - The message accompanying the file. 
  * @returns {Promise<Object>} A promise that resolves to an object indicating the success or failure of the operation.
  * @throws {Error} If an error occurs during the database operation.
  */
-async function newUploadUpdater(from, to, fileURL) {
+async function newUploadUpdater(from, to, fileURL, message=null) {
     try {
         const database = client.db('IPFSFileTransfer');
-        const movies = database.collection('FileHistory');
+        const filehistory = database.collection('FileHistory');
+
+
 
         // Create a document to insert
         const doc = {
@@ -29,10 +32,13 @@ async function newUploadUpdater(from, to, fileURL) {
             to: to,
             fileURL: fileURL,
             date: new Date(),
-            status: "uploaded"
+            status: "uploaded",
+            message: message,
         };
 
-        const result = await movies.insertOne(doc);
+        console.log(doc)
+
+        const result = await filehistory.insertOne(doc);
         console.log(
             `${result.insertedCount} documents were inserted with the _id: ${result.insertedId}`,
         );
@@ -59,14 +65,14 @@ async function getNewFiles(userAddress) {
     try {
         await client.connect();
         const database = client.db('IPFSFileTransfer');
-        const movies = database.collection('FileHistory');
+        const filehistory = database.collection('FileHistory');
 
         const query = { to: userAddress, status: "uploaded" };
         const options = {
             sort: { date: -1 },
         };
 
-        const cursor = movies.find(query, options);
+        const cursor = filehistory.find(query, options);
 
         const results = await cursor.toArray();
 
@@ -92,7 +98,7 @@ async function updateFileStatus(fileId, status) {
     try {
         await client.connect();
         const database = client.db('IPFSFileTransfer');
-        const movies = database.collection('FileHistory');
+        const filehistory = database.collection('FileHistory');
 
         const query = { _id: fileId };
         const updateDoc = {
@@ -101,7 +107,7 @@ async function updateFileStatus(fileId, status) {
             },
         };
 
-        const result = await movies.updateOne(query, updateDoc);
+        const result = await filehistory.updateOne(query, updateDoc);
 
         console.log(`${result.matchedCount} document(s) matched the query criteria.`);
         console.log(`${result.modifiedCount} document(s) was/were updated.`);
@@ -127,14 +133,14 @@ async function fetchAllFiles(userAddress) {
     try {
         await client.connect();
         const database = client.db('IPFSFileTransfer');
-        const movies = database.collection('FileHistory');
+        const filehistory = database.collection('FileHistory');
 
         const query = { to: userAddress };
         const options = {
             sort: { date: -1 },
         };
 
-        const cursor = movies.find(query, options);
+        const cursor = filehistory.find(query, options);
 
         const results = await cursor.toArray();
 

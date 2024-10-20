@@ -14,7 +14,7 @@ const privateKey = fs.readFileSync(path.join(keysDir, 'private_key.pem'), { enco
  *
  * @param {string} inputFilePath - The path to the input file to be encrypted.
  * @param {string} outputFilePath - The path where the encrypted file will be saved.
- * @param {Buffer} publicKey - The RSA public key used for encryption. It should be passed as a Buffer.
+ * @param {string} publicKey - The RSA public key used for encryption.
  *
  * @throws Will throw an error if there is an issue reading the input file or writing the encrypted data.
  *
@@ -26,41 +26,48 @@ const privateKey = fs.readFileSync(path.join(keysDir, 'private_key.pem'), { enco
  * The encrypted data is then written to the output file. The function handles errors during the read and write
  * processes and logs them to the console.
  */
-function encryptFile(inputFilePath, outputFilePath, publicKey) {
+async function encryptFile(inputFilePath, outputFilePath, publicKey) {
     const chunkSize = 446;
 
     const readStream = fs.createReadStream(inputFilePath, { highWaterMark: chunkSize });
     const writeStream = fs.createWriteStream(outputFilePath);
+    try {
+        readStream.on('data', (chunk) => {
+            try {
+                const encryptedData = crypto.publicEncrypt(
+                    {
+                        key: publicKey,
+                        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                        oaepHash: 'sha256',
+                    },
+                    chunk
+                );
 
-    readStream.on('data', (chunk) => {
-        try {
-            const encryptedData = crypto.publicEncrypt(
-                {
-                    key: publicKey,
-                    padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-                    oaepHash: 'sha256',
-                },
-                chunk
-            );
+                writeStream.write(encryptedData);
+            } catch (err) {
+                console.error('Error during encryption:', err.message);
+            }
+        });
 
-            writeStream.write(encryptedData);
-        } catch (err) {
-            console.error('Error during encryption:', err.message);
-        }
-    });
+        readStream.on('end', () => {
+            console.log('File encryption completed.');
+            writeStream.end();
+        });
 
-    readStream.on('end', () => {
-        console.log('File encryption completed.');
-        writeStream.end();
-    });
+        readStream.on('error', (err) => {
+            console.error(`Error reading file: ${err.message}`);
+        });
 
-    readStream.on('error', (err) => {
-        console.error(`Error reading file: ${err.message}`);
-    });
+        writeStream.on('error', (err) => {
+            console.error(`Error writing file: ${err.message}`);
+        });
 
-    writeStream.on('error', (err) => {
-        console.error(`Error writing file: ${err.message}`);
-    });
+        return { success: true, message: 'File encrypted successfully' };
+    }
+    catch (err) {
+        console.log(err);
+        return { success: false, message: 'Error encrypting file: ' + err.message };
+    }
 }
 
 /**
@@ -68,7 +75,7 @@ function encryptFile(inputFilePath, outputFilePath, publicKey) {
  *
  * @param {string} inputFilePath - The path to the encrypted input file.
  * @param {string} outputFilePath - The path to the decrypted output file.
- * @param {Buffer} privateKey - The RSA private key used for decryption. It should be passed as a Buffer.
+ * @param {string} privateKey - The RSA private key used for decryption.
  *
  * @throws Will throw an error if there is an issue reading the input file or writing to the output file.
  *
@@ -84,36 +91,42 @@ function decryptFile(inputFilePath, outputFilePath, privateKey) {
 
     const readStream = fs.createReadStream(inputFilePath, { highWaterMark: chunkSize });
     const writeStream = fs.createWriteStream(outputFilePath);
+    try {
+        readStream.on('data', (chunk) => {
+            try {
+                const decryptedData = crypto.privateDecrypt(
+                    {
+                        key: privateKey,
+                        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                        oaepHash: 'sha256',
+                    },
+                    chunk
+                );
 
-    readStream.on('data', (chunk) => {
-        try {
-            const decryptedData = crypto.privateDecrypt(
-                {
-                    key: privateKey,
-                    padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-                    oaepHash: 'sha256',
-                },
-                chunk
-            );
+                writeStream.write(decryptedData);
+            } catch (err) {
+                console.error('Error during decryption:', err.message);
+            }
+        });
 
-            writeStream.write(decryptedData);
-        } catch (err) {
-            console.error('Error during decryption:', err.message);
-        }
-    });
+        readStream.on('end', () => {
+            console.log('File decryption completed.');
+            writeStream.end();
+        });
 
-    readStream.on('end', () => {
-        console.log('File decryption completed.');
-        writeStream.end();
-    });
+        readStream.on('error', (err) => {
+            console.error(`Error reading file: ${err.message}`);
+        });
 
-    readStream.on('error', (err) => {
-        console.error(`Error reading file: ${err.message}`);
-    });
+        writeStream.on('error', (err) => {
+            console.error(`Error writing file: ${err.message}`);
+        });
 
-    writeStream.on('error', (err) => {
-        console.error(`Error writing file: ${err.message}`);
-    });
+        return { success: true, message: 'File decrypted successfully' };
+    } catch (err) {
+        console.log(err);
+        return { success: false, message: 'Error decrypting file: ' + err.message };
+    }
 }
 
 const inputFilePath = path.join(__dirname, 'sourcefile.txt');
