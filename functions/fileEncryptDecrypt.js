@@ -129,19 +129,19 @@ function decryptFile(inputFilePath, outputFilePath, privateKey) {
     }
 }
 
-const inputFilePath = path.join(__dirname, 'sourcefile.txt');
-const encryptedFolder = path.join(__dirname, 'encrypted');
-const encryptedFilePath = path.join(encryptedFolder, '20240604.jpg');
+// const inputFilePath = path.join(__dirname, 'sourcefile.txt');
+// const encryptedFolder = path.join(__dirname, 'encrypted');
+// const encryptedFilePath = path.join(encryptedFolder, '20240604.jpg');
 
-const decryptedFolder = path.join(__dirname, 'decrypted');
-const decryptedFilePath = path.join(decryptedFolder, '20240604_decrypted.jpg');
+// const decryptedFolder = path.join(__dirname, 'decrypted');
+// const decryptedFilePath = path.join(decryptedFolder, '20240604_decrypted.jpg');
 
-if (!fs.existsSync(encryptedFolder)) {
-    fs.mkdirSync(encryptedFolder);
-}
-if (!fs.existsSync(decryptedFolder)) {
-    fs.mkdirSync(decryptedFolder);
-}
+// if (!fs.existsSync(encryptedFolder)) {
+//     fs.mkdirSync(encryptedFolder);
+// }
+// if (!fs.existsSync(decryptedFolder)) {
+//     fs.mkdirSync(decryptedFolder);
+// }
 
 // encryptFile(inputFilePath, encryptedFilePath);
 

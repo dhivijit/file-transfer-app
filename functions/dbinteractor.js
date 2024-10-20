@@ -24,8 +24,6 @@ async function newUploadUpdater(from, to, fileURL, message=null) {
         const database = client.db('IPFSFileTransfer');
         const filehistory = database.collection('FileHistory');
 
-
-
         // Create a document to insert
         const doc = {
             from: from,
@@ -36,12 +34,7 @@ async function newUploadUpdater(from, to, fileURL, message=null) {
             message: message,
         };
 
-        console.log(doc)
-
         const result = await filehistory.insertOne(doc);
-        console.log(
-            `${result.insertedCount} documents were inserted with the _id: ${result.insertedId}`,
-        );
 
         return { success: "true", message: "Document inserted successfully" };
 

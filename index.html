@@ -52,7 +52,12 @@
     <div class="item-info-card" id="item-info-card">
         <button class="close-btn" id="close-btn">&times;</button>
         <h3>Item Information</h3>
-        <p id="item-info">Details about the selected item will appear here.</p>
+        <!-- <p class="item-info">From: <span id="fileSender"></span></p> -->
+        <p class="item-info">Message: <span id="messagefromSender"></span></p>
+        <p class="item-info">Time: <span id="timeofSending"></span></p>
+
+        <!-- Add a button which says download file -->
+        <button id="download-btn" class="download-btn">Download File</button>
     </div>
 
     <div class="upload-container" id="upload-container">
@@ -163,27 +168,6 @@
             }
             overlay.style.display = 'none';
             activeModal = null;
-        });
-
-        // Additional event listeners for the search functionality
-        searchBtn.addEventListener('click', () => {
-            const items = ['File 1', 'File 2', 'File 3', 'File 4', 'File 5'];
-
-            listboxItems.innerHTML = '';
-            items.forEach(item => {
-                const li = document.createElement('li');
-                li.textContent = item;
-                listboxItems.appendChild(li);
-
-                li.addEventListener('click', () => {
-                    itemInfo.textContent = `Details about ${item}.`;
-                    itemInfoCard.style.display = 'block';
-                    overlay.style.display = 'block';
-                });
-            });
-
-            listbox.style.display = 'block';
-            hideBtn.style.display = 'block';
         });
 
         hideBtn.addEventListener('click', () => {

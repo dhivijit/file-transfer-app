@@ -23,4 +23,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     uploadFiletoIPFS: () => ipcRenderer.invoke('uploadFiletoIPFS'),
     mongoDbupload: (link, message) => ipcRenderer.invoke('mongoDbupload', link, message),
     cleanDir: () => ipcRenderer.invoke('cleanDir'),
+    checkNewFiles: () => ipcRenderer.invoke('checkNewFiles'),
+    downloadFile: (url) => ipcRenderer.invoke('downloadFile', url),
+    decryptFile: () => ipcRenderer.invoke('decrypt-file'),
 });

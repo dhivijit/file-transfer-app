@@ -19,9 +19,4 @@ function hashPublicKey(pemFilePath) {
     return hashedKey;
 }
 
-const userDir = "C:/Users/dhivi/AppData/Roaming/file-transfer-app";
-const keysDir = path.join(userDir, 'keys');
-
-console.log(hashPublicKey(path.join(keysDir, 'public_key.pem')));
-
 module.exports = hashPublicKey;

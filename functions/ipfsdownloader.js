@@ -2,7 +2,6 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-
 /**
  * Downloads a file from the given URL and saves it to the local filesystem.
  *
@@ -10,7 +9,7 @@ const path = require('path');
  * @function downloadFile
  * @param {string} url - The URL of the file to download.
  * @param {string} directory - The directory where the file should be saved.
- * @returns {Promise<void>} - A promise that resolves when the file has been downloaded and saved.
+ * @returns {Promise<Object>} - A promise that resolves with a success message or an error message.
  * @throws {Error} - Throws an error if the download or file writing process fails.
  */
 async function downloadFile(url, directory) {
@@ -27,19 +26,21 @@ async function downloadFile(url, directory) {
 
     response.data.pipe(writer);
 
-    writer.on('finish', () => {
-      console.log(`File downloaded successfully: ${filePath}`);
-    });
+    return new Promise((resolve, reject) => {
+      writer.on('finish', () => {
+        console.log(`File downloaded successfully: ${filePath}`);
+        resolve({ success: true, message: "File Downloaded Successfully" });
+      });
 
-    writer.on('error', (err) => {
-      console.error('Error writing file:', err);
+      writer.on('error', (err) => {
+        console.error('Error writing file:', err);
+        reject({ success: false, message: "Error writing file" });
+      });
     });
   } catch (error) {
     console.error('Error downloading file:', error);
+    return { success: false, message: "Error downloading file" };
   }
 }
-
-// const url = 'https://bafybeif44fa5wxvejrx2p3pa7pa2kzepsmgddelmbs2pqsgtyi6ah53rfy.ipfs.w3s.link/20240802.jpg';
-// downloadFile(url);
 
 module.exports = downloadFile;

@@ -2,6 +2,7 @@ function showCustomAlert(title, message) {
     window.electronAPI.alertInvoke({ title, message });
 }
 
+// Key Management
 async function keyVerifier() {
     const keyCheckResult = await window.electronAPI.checkKey();
 
@@ -87,6 +88,7 @@ document.querySelector("#keyClearBtn").addEventListener("click", async () => {
     keyVerifier();
 });
 
+// File Sending
 document.querySelector("#encrypt-btn").addEventListener("click", async () => {
     document.querySelector("#statusdiv").style.display = "block";
     const statusBox = document.querySelector("#currStatus");
@@ -189,3 +191,53 @@ document.querySelector("#encrypt-btn").addEventListener("click", async () => {
 
     await window.electronAPI.cleanDir();
 });
+
+// File Receiving
+searchBtn.addEventListener('click', async () => {
+    // Fetch the list of items from the API (assuming each item contains message, sender, and time).
+    const items = await window.electronAPI.checkNewFiles();
+
+    // Clear the existing listbox content.
+    listboxItems.innerHTML = '';
+
+    // Loop through the received items and create listbox elements.
+    items.forEach((item, index) => {
+        // Create a new list item (li) for each item.
+        const li = document.createElement('li');
+        li.textContent = item.message.length > 7 ? item.message.substring(0, 7) + "..." : item.message;
+        listboxItems.appendChild(li);
+
+        // Add click event listener for each list item.
+        li.addEventListener('click', () => {
+            // Populate the item-info-card with the full details of the selected item.
+            // document.getElementById('fileSender').textContent = item.from;
+            console.log(item);
+            document.getElementById('messagefromSender').textContent = item.message;
+            document.getElementById('timeofSending').textContent = new Date(item.date).toLocaleString(); // Format the time nicely
+            document.getElementById('download-btn').addEventListener("click", async () => {
+                console.log(item.fileURL);
+                const result = await window.electronAPI.downloadFile(item.fileURL);
+
+                if (result.success) {
+                    const decryptResult = await window.electronAPI.decryptFile();
+
+                    // Show the save as file dialog
+                    if(decryptResult.success){
+                        showCustomAlert("Success", "File Saved successfully");
+                    }
+                } else {
+                    showCustomAlert("Error", "Error downloading file: " + result.message);
+                }
+            });
+
+            // Show the item info card and overlay.
+            itemInfoCard.style.display = 'block';
+            overlay.style.display = 'block';
+        });
+    });
+
+    // Show the listbox and the hide button.
+    listbox.style.display = 'block';
+    hideBtn.style.display = 'block';
+});
+

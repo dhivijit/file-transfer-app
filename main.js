@@ -8,9 +8,10 @@ const crypto = require("crypto");
 const keyGen = require("./functions/generateKeys");
 const { encryptFile, decryptFile } = require("./functions/fileEncryptDecrypt");
 const IPFSUploader = require("./functions/web3storageinteractor");
-const { newUploadUpdater } = require("./functions/dbinteractor");
+const { newUploadUpdater, getNewFiles } = require("./functions/dbinteractor");
 const hashPublicKey = require("./functions/keyhasher");
 const clearDirectory = require("./functions/dircleaner");
+const downloadFile = require("./functions/ipfsdownloader");
 
 let aboutWindow;
 let win;
@@ -329,7 +330,7 @@ ipcMain.handle("mongoDbupload", async (event, link, message) => {
     const receiverPublicKeyPath = fs.readdirSync(tempDir).filter(file => file.endsWith('.pem'))[0];
     const receiverHash = hashPublicKey(path.join(tempDir, receiverPublicKeyPath));
     const senderHash = hashPublicKey(path.join(userDir, 'keys', 'public_key.pem'));
-    console.log(link, )
+    console.log(link,)
 
     const result = await newUploadUpdater(senderHash, receiverHash, link, message);
     console.log(result);
@@ -339,7 +340,71 @@ ipcMain.handle("mongoDbupload", async (event, link, message) => {
 
 ipcMain.handle("cleanDir", async () => {
     return clearDirectory(tempDir);
+});
+
+ipcMain.handle("checkNewFiles", async () => {
+    const userHash = hashPublicKey(path.join(userDir, 'keys', 'public_key.pem'));
+    const result = await getNewFiles(userHash);
+    return result;
 })
+
+ipcMain.handle("downloadFile", async (event, url) => {
+    const output = await downloadFile(url, tempDir);
+    return output;
+});
+
+ipcMain.handle("decrypt-file", async () => {
+    try {
+        const files = fs.readdirSync(tempDir);
+        let filetoDecryptPath;
+        let fileName;
+
+        // Find the .enc file in the temp directory
+        for (const file of files) {
+            if (file.endsWith('.enc')) {
+                filetoDecryptPath = path.join(tempDir, file);
+                fileName = file;
+                break;
+            }
+        }
+
+        // If no .enc file is found, return an error
+        if (!filetoDecryptPath) {
+            throw new Error('No encrypted file found to decrypt');
+        }
+
+        // Decrypt the file
+        const decryptedFilePath = filetoDecryptPath.slice(0, -4); // Remove the '.enc' extension
+        const output = await decryptFile(filetoDecryptPath, decryptedFilePath, fs.readFileSync(path.join(userDir, 'keys', 'private_key.pem'), { encoding: 'utf-8' }));
+
+        // Delete the encrypted file
+        fs.unlinkSync(filetoDecryptPath);
+
+        // Show the save dialog to let the user choose where to save the decrypted file
+        const result = await dialog.showSaveDialog({
+            title: "Save Decrypted File",
+            defaultPath: path.basename(decryptedFilePath), // Default file name without the ".enc"
+            filters: [
+                { name: 'All Files', extensions: ['*'] } // You can modify this based on file type if needed
+            ]
+        });
+
+        // If user cancels the dialog
+        if (result.canceled) {
+            return { success: false, message: 'File save cancelled.' };
+        }
+
+        // Copy the decrypted file to the chosen path
+        fs.copyFileSync(decryptedFilePath, result.filePath);
+
+        // Optionally, you can delete the decrypted file from tempDir after saving
+        // fs.unlinkSync(decryptedFilePath);
+
+        return { success: true, message: 'File saved successfully.', fileName: path.basename(result.filePath) };
+    } catch (err) {
+        return { success: false, message: err.message };
+    }
+});
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
