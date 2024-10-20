@@ -9,10 +9,11 @@ const path = require('path');
  * @async
  * @function downloadFile
  * @param {string} url - The URL of the file to download.
+ * @param {string} directory - The directory where the file should be saved.
  * @returns {Promise<void>} - A promise that resolves when the file has been downloaded and saved.
  * @throws {Error} - Throws an error if the download or file writing process fails.
  */
-async function downloadFile(url) {
+async function downloadFile(url, directory) {
   try {
     const response = await axios({
       method: 'get',
@@ -21,12 +22,13 @@ async function downloadFile(url) {
     });
 
     const fileName = path.basename(url);
-    const writer = fs.createWriteStream(fileName);
+    const filePath = path.join(directory, fileName);
+    const writer = fs.createWriteStream(filePath);
 
     response.data.pipe(writer);
 
     writer.on('finish', () => {
-      console.log(`File downloaded successfully: ${fileName}`);
+      console.log(`File downloaded successfully: ${filePath}`);
     });
 
     writer.on('error', (err) => {

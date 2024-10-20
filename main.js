@@ -5,7 +5,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 const crypto = require("crypto");
 
-const keyGen = require("./generateKeys");
+const keyGen = require("./functions/generateKeys");
 
 let aboutWindow;
 let win;
