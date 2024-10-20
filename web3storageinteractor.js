@@ -40,14 +40,14 @@ async function main() {
     // READY to go!
 
     // Example of uploading files (you can uncomment this part if needed)
-    // const myImg = "./20241005.jpg";
-    // const files = await filesFromPaths([myImg]);
-    // const directoryCid = await client.uploadDirectory(files);
-    // console.log(`Directory CID: ${directoryCid}`);
+    const myImg = "./files/20241005.jpg";
+    const files = await filesFromPaths([myImg]);
+    const directoryCid = await client.uploadDirectory(files);
+    console.log(`Directory CID: ${directoryCid}`);
 
     // Listing uploaded files
-    const listed = await client.capability.upload.list({ cursor: '', size: 25 });
-    console.log("The list of files: ", JSON.stringify(listed, null, 2));
+    // const listed = await client.capability.upload.list({ cursor: '', size: 25 });
+    // console.log("The list of files: ", JSON.stringify(listed, null, 2));
 
   } catch (error) {
     console.error('Error occurred:', error);

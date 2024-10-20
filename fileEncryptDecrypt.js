@@ -1,12 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { app }=require('electron');
+const { app } = require('electron');
 
 const userDir = app.getPath('userData');
 const keysDir = path.join(userDir, 'keys');
 
-const publicKey = fs.readFileSync(path.join(keysDir, 'public_key.pem'), { encoding: 'utf-8' });
+// const publicKey = fs.readFileSync(path.join(keysDir, 'public_key.pem'), { encoding: 'utf-8' });
 const privateKey = fs.readFileSync(path.join(keysDir, 'private_key.pem'), { encoding: 'utf-8' });
 
 /**
@@ -14,6 +14,7 @@ const privateKey = fs.readFileSync(path.join(keysDir, 'private_key.pem'), { enco
  *
  * @param {string} inputFilePath - The path to the input file to be encrypted.
  * @param {string} outputFilePath - The path where the encrypted file will be saved.
+ * @param {Buffer} publicKey - The RSA public key used for encryption. It should be passed as a Buffer.
  *
  * @throws Will throw an error if there is an issue reading the input file or writing the encrypted data.
  *
@@ -25,7 +26,7 @@ const privateKey = fs.readFileSync(path.join(keysDir, 'private_key.pem'), { enco
  * The encrypted data is then written to the output file. The function handles errors during the read and write
  * processes and logs them to the console.
  */
-function encryptFile(inputFilePath, outputFilePath) {
+function encryptFile(inputFilePath, outputFilePath, publicKey) {
     const chunkSize = 446;
 
     const readStream = fs.createReadStream(inputFilePath, { highWaterMark: chunkSize });
@@ -67,6 +68,7 @@ function encryptFile(inputFilePath, outputFilePath) {
  *
  * @param {string} inputFilePath - The path to the encrypted input file.
  * @param {string} outputFilePath - The path to the decrypted output file.
+ * @param {Buffer} privateKey - The RSA private key used for decryption. It should be passed as a Buffer.
  *
  * @throws Will throw an error if there is an issue reading the input file or writing to the output file.
  *
@@ -77,7 +79,7 @@ function encryptFile(inputFilePath, outputFilePath) {
  * This function reads an encrypted file in chunks, decrypts each chunk using a provided RSA private key,
  * and writes the decrypted data to an output file. It handles errors during the read, write, and decryption processes.
  */
-function decryptFile(inputFilePath, outputFilePath) {
+function decryptFile(inputFilePath, outputFilePath, privateKey) {
     const chunkSize = 512;
 
     const readStream = fs.createReadStream(inputFilePath, { highWaterMark: chunkSize });

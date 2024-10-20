@@ -47,7 +47,9 @@ document.getElementById('keySavebtn').addEventListener('click', async () => {
         });
     }
 
-    if (fileArray.length > 0) {
+    if (fileArray.length == 1) {
+        showCustomAlert("Error", "Please select both files to save");
+    } else if (fileArray.length > 0) {
         const result = await window.electronAPI.saveFiles(fileArray);
 
         if (result.success) {
@@ -55,7 +57,8 @@ document.getElementById('keySavebtn').addEventListener('click', async () => {
         } else {
             showCustomAlert("Error", "Error saving files: " + result.message);
         }
-    } else {
+    }
+    else {
         showCustomAlert("Error", "Please select files to save");
     }
 
