@@ -110,7 +110,6 @@ function decryptFile(inputFilePath, outputFilePath, privateKey) {
         });
 
         readStream.on('end', () => {
-            console.log('File decryption completed.');
             writeStream.end();
         });
 

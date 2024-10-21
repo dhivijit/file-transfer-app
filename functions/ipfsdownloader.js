@@ -28,7 +28,6 @@ async function downloadFile(url, directory) {
 
     return new Promise((resolve, reject) => {
       writer.on('finish', () => {
-        console.log(`File downloaded successfully: ${filePath}`);
         resolve({ success: true, message: "File Downloaded Successfully" });
       });
 

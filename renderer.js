@@ -2,6 +2,15 @@ function showCustomAlert(title, message) {
     window.electronAPI.alertInvoke({ title, message });
 }
 
+function toggleButtons(state) {
+    const buttons = document.querySelectorAll("button");
+    buttons.forEach(button => {
+        button.disabled = state;
+        button.style.cursor = state ? 'wait' : 'pointer';
+
+    });
+}
+
 // Key Management
 async function keyVerifier() {
     const keyCheckResult = await window.electronAPI.checkKey();
@@ -133,12 +142,15 @@ document.querySelector("#encrypt-btn").addEventListener("click", async () => {
         statusBox.innerHTML = "Please select both files to start the operation";
         return;
     }
-
+    document.body.style.cursor = 'wait';
+    toggleButtons(true)
     const result = await window.electronAPI.SaveUserFiles(fileArray);
 
     if (!result.success) {
         showCustomAlert("Error", "Error saving files: " + result.message);
         statusBox.innerHTML = "Error saving files: " + result.message;
+        document.body.style.cursor = 'default';
+        toggleButtons(false)
         return;
     }
 
@@ -149,6 +161,8 @@ document.querySelector("#encrypt-btn").addEventListener("click", async () => {
     if (!encryptResult.success) {
         showCustomAlert("Error", "Error encrypting file: " + encryptResult.message);
         statusBox.innerHTML = "Error encrypting file: " + encryptResult.message;
+        document.body.style.cursor = 'default';
+        toggleButtons(false)
         return;
     }
 
@@ -163,6 +177,8 @@ document.querySelector("#encrypt-btn").addEventListener("click", async () => {
     if (!uploadResult.success) {
         showCustomAlert("Error", "Error uploading file: " + uploadResult.message);
         statusBox.innerHTML = "Error uploading file: " + uploadResult.message;
+        document.body.style.cursor = 'default';
+        toggleButtons(false)
         return;
     }
 
@@ -178,12 +194,16 @@ document.querySelector("#encrypt-btn").addEventListener("click", async () => {
     if (!mongoResult.success) {
         showCustomAlert("Error", "Error notifying user: " + mongoResult.message);
         statusBox.innerHTML = "Error notifying user: " + mongoResult.message;
+        document.body.style.cursor = 'default';
+        toggleButtons(false)
         return;
     }
 
     statusBox.innerHTML = "User notified successfully";
     await new Promise(resolve => setTimeout(resolve, 1000));
     statusBox.innerHTML = "Operation completed successfully";
+    document.body.style.cursor = 'default';
+    toggleButtons(false)
 
     publicKeyUpload.value = "";
     fileUploaded.value = "";
@@ -194,50 +214,66 @@ document.querySelector("#encrypt-btn").addEventListener("click", async () => {
 
 // File Receiving
 searchBtn.addEventListener('click', async () => {
+    // Set the mouse pointer to load while fetching data.
+    document.body.style.cursor = 'wait';
+    toggleButtons(true)
     // Fetch the list of items from the API (assuming each item contains message, sender, and time).
     const items = await window.electronAPI.checkNewFiles();
+
+    // Reset the mouse pointer after fetching data.
+    document.body.style.cursor = 'default';
+    toggleButtons(false)
 
     // Clear the existing listbox content.
     listboxItems.innerHTML = '';
 
-    // Loop through the received items and create listbox elements.
-    items.forEach((item, index) => {
-        // Create a new list item (li) for each item.
-        const li = document.createElement('li');
-        li.textContent = item.message.length > 7 ? item.message.substring(0, 7) + "..." : item.message;
-        listboxItems.appendChild(li);
+    if (items.length === 0) {
+        // Display a message if no new files are found.
+        const noFilesMessage = document.createElement('p');
+        noFilesMessage.textContent = "No new files.";
+        listboxItems.appendChild(noFilesMessage);
+    } else {
+        // Loop through the received items and create listbox elements.
+        items.forEach((item, index) => {
+            // Create a new list item (li) for each item.
+            const li = document.createElement('li');
+            li.textContent = item.message.length > 7 ? item.message.substring(0, 7) + "..." : item.message;
+            listboxItems.appendChild(li);
 
-        // Add click event listener for each list item.
-        li.addEventListener('click', () => {
-            // Populate the item-info-card with the full details of the selected item.
-            // document.getElementById('fileSender').textContent = item.from;
-            console.log(item);
-            document.getElementById('messagefromSender').textContent = item.message;
-            document.getElementById('timeofSending').textContent = new Date(item.date).toLocaleString(); // Format the time nicely
-            document.getElementById('download-btn').addEventListener("click", async () => {
-                console.log(item.fileURL);
-                const result = await window.electronAPI.downloadFile(item.fileURL);
-
-                if (result.success) {
-                    const decryptResult = await window.electronAPI.decryptFile();
-
-                    // Show the save as file dialog
-                    if(decryptResult.success){
-                        showCustomAlert("Success", "File Saved successfully");
+            // Add click event listener for each list item.
+            li.addEventListener('click', () => {
+                // Populate the item-info-card with the full details of the selected item.
+                console.log(item);
+                document.getElementById('messagefromSender').textContent = item.message;
+                document.getElementById('timeofSending').textContent = new Date(item.date).toLocaleString(); // Format the time nicely
+                document.getElementById('download-btn').addEventListener("click", async () => {
+                    toggleButtons(true);
+                    document.body.style.cursor = 'wait';
+                    const result = await window.electronAPI.downloadFile(item.fileURL);
+                    
+                    if (result.success) {
+                        const decryptResult = await window.electronAPI.decryptFile();
+                        document.body.style.cursor = 'default';
+                        toggleButtons(false);
+                        // Show the save as file dialog
+                        if (decryptResult.success) {
+                            showCustomAlert("Success", "File Saved successfully");
+                        }
+                    } else {
+                        showCustomAlert("Error", "Error downloading file: " + result.message);
+                        document.body.style.cursor = 'default';
+                        toggleButtons(false);
                     }
-                } else {
-                    showCustomAlert("Error", "Error downloading file: " + result.message);
-                }
-            });
+                });
 
-            // Show the item info card and overlay.
-            itemInfoCard.style.display = 'block';
-            overlay.style.display = 'block';
+                // Show the item info card and overlay.
+                itemInfoCard.style.display = 'block';
+                overlay.style.display = 'block';
+            });
         });
-    });
+    }
 
     // Show the listbox and the hide button.
     listbox.style.display = 'block';
     hideBtn.style.display = 'block';
 });
-
