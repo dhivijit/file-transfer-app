@@ -26,4 +26,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     checkNewFiles: () => ipcRenderer.invoke('checkNewFiles'),
     downloadFile: (url) => ipcRenderer.invoke('downloadFile', url),
     decryptFile: () => ipcRenderer.invoke('decrypt-file'),
+    deleteFile: (fileId) => ipcRenderer.invoke('deleteFile', fileId),
+    sharePublicKey: () => ipcRenderer.invoke('share-public-key'),
 });

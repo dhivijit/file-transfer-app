@@ -62,5 +62,37 @@ async function IPFSUploader(uploadFilePath) {
   }
 }
 
+/**
+ * Deletes a file from IPFS using the provided CID.
+ *
+ * @async
+ * @function IPFSFileDeleter
+ * @param {string} Cid - The CID of the file to be deleted.
+ * @returns {Promise<Object>} A promise that resolves to an object indicating the success or failure of the deletion operation.
+ * @property {boolean} success - Indicates whether the file was deleted successfully.
+ * @property {string} message - A message describing the result of the deletion operation.
+ * @throws Will throw an error if the deletion process fails.
+ */
+async function IPFSFileDeleter(Cid) {
+  try {
+    await initializeModules();
 
-module.exports = IPFSUploader;
+    const principal = Signer.parse(process.env.KEY);
+    const store = new StoreMemory();
+    const client = await Client.create({ principal, store });
+
+    const proof = await Proof.parse(process.env.PROOF);
+    const space = await client.addSpace(proof);
+    await client.setCurrentSpace(space.did());
+    await client.remove(Cid, { shards: true })
+
+    return { success: true, message: 'File deleted successfully.' };
+
+  } catch (error) {
+    console.error('Error occurred:', error);
+    return { success: false, message: 'Error deleting file: ' + error.message };
+  }
+}
+
+
+module.exports = { IPFSUploader, IPFSFileDeleter };

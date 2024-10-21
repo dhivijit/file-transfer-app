@@ -19,8 +19,10 @@ const client = new MongoClient(uri);
  * @returns {Promise<Object>} A promise that resolves to an object indicating the success or failure of the operation.
  * @throws {Error} If an error occurs during the database operation.
  */
-async function newUploadUpdater(from, to, fileURL, message=null) {
+async function newUploadUpdater(from, to, fileURL, message = null) {
     try {
+        await client.connect();
+
         const database = client.db('IPFSFileTransfer');
         const filehistory = database.collection('FileHistory');
 
@@ -102,9 +104,6 @@ async function updateFileStatus(fileId, status) {
 
         const result = await filehistory.updateOne(query, updateDoc);
 
-        console.log(`${result.matchedCount} document(s) matched the query criteria.`);
-        console.log(`${result.modifiedCount} document(s) was/were updated.`);
-
         return { success: "true", message: "Document updated successfully" };
     } catch (error) {
         return { success: "false", message: error.message };
@@ -145,4 +144,31 @@ async function fetchAllFiles(userAddress) {
     }
 }
 
-module.exports = { newUploadUpdater, getNewFiles, updateFileStatus, fetchAllFiles };
+/**
+ * Deletes a file document from the 'FileHistory' collection in the 'IPFSFileTransfer' database.
+ *
+ * @async
+ * @function deleteFile
+ * @param {string} fileId - The ID of the file document to delete.
+ * @returns {Promise<Object>} A promise that resolves to an object containing the success status, a message, and the deleted document element if successful.
+ * @throws {Error} If an error occurs during the database operation.
+ */
+async function deleteFile(fileUrl) {
+    try {
+        await client.connect();
+        const database = client.db('IPFSFileTransfer');
+        const filehistory = database.collection('FileHistory');
+
+        const element = await filehistory.findOne({ fileURL: fileUrl });
+
+        const result = await filehistory.deleteOne({ fileURL: fileUrl });
+        return { success: "true", message: "Document deleted successfully", deletedElement: element };
+    } catch (error) {
+        console.error(error);
+        return { success: "false", message: error.message };
+    } finally {
+        await client.close();
+    }
+}
+
+module.exports = { newUploadUpdater, getNewFiles, updateFileStatus, fetchAllFiles, deleteFile };

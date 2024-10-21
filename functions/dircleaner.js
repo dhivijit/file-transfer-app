@@ -10,7 +10,6 @@ async function clearDirectory(directory) {
             fs.unlinkSync(`${directory}/${file}`);
         }
 
-        console.log('Directory cleared successfully');
         return { success: true, message: 'Directory cleared successfully' };
     }
     catch (error) {

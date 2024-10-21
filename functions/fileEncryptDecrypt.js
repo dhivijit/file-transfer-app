@@ -50,7 +50,6 @@ async function encryptFile(inputFilePath, outputFilePath, publicKey) {
         });
 
         readStream.on('end', () => {
-            console.log('File encryption completed.');
             writeStream.end();
         });
 
@@ -65,7 +64,6 @@ async function encryptFile(inputFilePath, outputFilePath, publicKey) {
         return { success: true, message: 'File encrypted successfully' };
     }
     catch (err) {
-        console.log(err);
         return { success: false, message: 'Error encrypting file: ' + err.message };
     }
 }
@@ -123,7 +121,6 @@ function decryptFile(inputFilePath, outputFilePath, privateKey) {
 
         return { success: true, message: 'File decrypted successfully' };
     } catch (err) {
-        console.log(err);
         return { success: false, message: 'Error decrypting file: ' + err.message };
     }
 }

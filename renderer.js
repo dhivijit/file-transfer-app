@@ -17,8 +17,10 @@ async function keyVerifier() {
 
     if (keyCheckResult.success) {
         document.getElementById("keycheck").style.display = "block";
+        document.getElementById("share-key").style.display = "block";
     } else {
         document.getElementById("keycheck").style.display = "none";
+        document.getElementById("share-key").style.display = "none";
     }
 }
 
@@ -202,9 +204,14 @@ document.querySelector("#encrypt-btn").addEventListener("click", async () => {
     statusBox.innerHTML = "User notified successfully";
     await new Promise(resolve => setTimeout(resolve, 1000));
     statusBox.innerHTML = "Operation completed successfully";
+    showCustomAlert("Success", "Operation completed successfully");
     document.body.style.cursor = 'default';
     toggleButtons(false)
 
+    document.querySelector("#upload-container").style.display = "none";
+    overlay.style.display = "none";
+
+    document.querySelector("#statusdiv").style.display = "none";
     publicKeyUpload.value = "";
     fileUploaded.value = "";
     userMessage.value = "";
@@ -237,20 +244,19 @@ searchBtn.addEventListener('click', async () => {
         items.forEach((item, index) => {
             // Create a new list item (li) for each item.
             const li = document.createElement('li');
-            li.textContent = item.message.length > 7 ? item.message.substring(0, 7) + "..." : item.message;
+            li.textContent = new Date(item.date).toLocaleString();
             listboxItems.appendChild(li);
 
             // Add click event listener for each list item.
             li.addEventListener('click', () => {
                 // Populate the item-info-card with the full details of the selected item.
-                console.log(item);
                 document.getElementById('messagefromSender').textContent = item.message;
                 document.getElementById('timeofSending').textContent = new Date(item.date).toLocaleString(); // Format the time nicely
                 document.getElementById('download-btn').addEventListener("click", async () => {
                     toggleButtons(true);
                     document.body.style.cursor = 'wait';
                     const result = await window.electronAPI.downloadFile(item.fileURL);
-                    
+
                     if (result.success) {
                         const decryptResult = await window.electronAPI.decryptFile();
                         document.body.style.cursor = 'default';
@@ -266,6 +272,33 @@ searchBtn.addEventListener('click', async () => {
                     }
                 });
 
+                document.getElementById("delete-btn").addEventListener("click", async () => {
+                    // ask for confirmation
+                    const response = await window.electronAPI.promptInvoke({ title: "Confirm ?", message: "Are you sure you want to delete this file?" });
+
+                    if (!response) {
+                        return;
+                    }
+
+                    toggleButtons(true);
+                    document.body.style.cursor = 'wait';
+                    const result = await window.electronAPI.deleteFile(item.fileURL);
+
+                    if (result.success) {
+                        showCustomAlert("Success", "File deleted successfully");
+                        document.body.style.cursor = 'default';
+                        toggleButtons(false);
+                    } else {
+                        showCustomAlert("Error", "Error deleting file: " + result.message);
+                        document.body.style.cursor = 'default';
+                        toggleButtons(false);
+                    }
+                    listbox.style.display = 'none';
+                    hideBtn.style.display = 'none';
+                    itemInfoCard.style.display = 'none';
+                    overlay.style.display = 'none';
+                });
+
                 // Show the item info card and overlay.
                 itemInfoCard.style.display = 'block';
                 overlay.style.display = 'block';
@@ -276,4 +309,10 @@ searchBtn.addEventListener('click', async () => {
     // Show the listbox and the hide button.
     listbox.style.display = 'block';
     hideBtn.style.display = 'block';
+});
+
+
+// Share key
+document.querySelector("#share-button").addEventListener("click", async () => {
+    await window.electronAPI.sharePublicKey();
 });

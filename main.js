@@ -7,8 +7,8 @@ const crypto = require("crypto");
 
 const keyGen = require("./functions/generateKeys");
 const { encryptFile, decryptFile } = require("./functions/fileEncryptDecrypt");
-const IPFSUploader = require("./functions/web3storageinteractor");
-const { newUploadUpdater, getNewFiles } = require("./functions/dbinteractor");
+const { IPFSUploader, IPFSFileDeleter } = require("./functions/web3storageinteractor");
+const { newUploadUpdater, getNewFiles, deleteFile } = require("./functions/dbinteractor");
 const hashPublicKey = require("./functions/keyhasher");
 const clearDirectory = require("./functions/dircleaner");
 const downloadFile = require("./functions/ipfsdownloader");
@@ -205,7 +205,6 @@ ipcMain.handle('save-files', async (event, files) => {
 
         var validationOutput = validateKeys();
         if (!validationOutput.success) {
-            console.log(validationOutput);
             return { success: false, message: validationOutput.message };
         }
 
@@ -225,7 +224,6 @@ ipcMain.handle('key-check', async () => {
         if (fs.existsSync(privateKeyFile) && fs.existsSync(publicKeyFile)) {
             var validationOutput = validateKeys();
             if (!validationOutput.success) {
-                console.log(validationOutput);
                 return { success: false, message: validationOutput.message };
             }
             return { success: true, message: 'Key found.' };
@@ -316,8 +314,6 @@ ipcMain.handle("uploadFiletoIPFS", async () => {
     const result = await IPFSUploader(filetoUploadPath);
     if (result.success) {
         const finalLink = "https://" + result.directoryCid + ".ipfs.w3s.link/" + fileName;
-        console.log(result);
-        console.log(finalLink);
         return { finalLink, ...result };
     } else {
         return result;
@@ -325,15 +321,11 @@ ipcMain.handle("uploadFiletoIPFS", async () => {
 });
 
 ipcMain.handle("mongoDbupload", async (event, link, message) => {
-
-    console.log(link, message)
     const receiverPublicKeyPath = fs.readdirSync(tempDir).filter(file => file.endsWith('.pem'))[0];
     const receiverHash = hashPublicKey(path.join(tempDir, receiverPublicKeyPath));
     const senderHash = hashPublicKey(path.join(userDir, 'keys', 'public_key.pem'));
-    console.log(link,)
 
     const result = await newUploadUpdater(senderHash, receiverHash, link, message);
-    console.log(result);
 
     return result;
 });
@@ -391,6 +383,7 @@ ipcMain.handle("decrypt-file", async () => {
 
         // If user cancels the dialog
         if (result.canceled) {
+            fs.unlinkSync(decryptedFilePath);
             return { success: false, message: 'File save cancelled.' };
         }
 
@@ -398,11 +391,62 @@ ipcMain.handle("decrypt-file", async () => {
         fs.copyFileSync(decryptedFilePath, result.filePath);
 
         // Optionally, you can delete the decrypted file from tempDir after saving
-        // fs.unlinkSync(decryptedFilePath);
+        fs.unlinkSync(decryptedFilePath);
 
         return { success: true, message: 'File saved successfully.', fileName: path.basename(result.filePath) };
     } catch (err) {
         return { success: false, message: err.message };
+    }
+});
+
+ipcMain.handle("deleteFile", async (event, fileURL) => {
+
+    const result = await deleteFile(fileURL);
+
+    // if (result.success) {
+    //     const deletedElement = fileURL;
+    //     const cidRegex = /https:\/\/([^\.]+)\.ipfs\.w3s\.link/;
+
+    //     const match = deletedElement.match(cidRegex);
+
+    //     if (match && match[1]) {
+    //         const extractedPart = match[1];
+    //         console.log("Extracted:" + extractedPart);
+    //         const deleteAck = await IPFSFileDeleter(extractedPart);
+
+    //         if (deleteAck.success) {
+    //             return result;
+    //         } else {
+    //             return { success: false, message: 'Error deleting file from IPFS' };
+    //         }
+    //     } else {
+    //         return { success: false, message: 'Regex Check Failed' };
+    //     }
+    // } else {
+    //     return result
+    // }
+
+    return result;
+});
+
+ipcMain.handle('share-public-key', async (event) => {
+    const keysDir = path.join(userDir, 'keys');
+
+    const defaultSaveDirectory = app.getPath('desktop');
+
+    const result = await dialog.showSaveDialog({
+        title: 'Share Public Key',
+        defaultPath: path.join(defaultSaveDirectory, 'public_key.pem'),
+        buttonLabel: 'Save Key',
+        filters: [
+            { name: 'Public Key File', extensions: ['pem'] }
+        ]
+    });
+
+    if (result.canceled) {
+        return;
+    } else {
+        fs.copyFileSync(path.join(keysDir, 'public_key.pem'), result.filePath);
     }
 });
 
