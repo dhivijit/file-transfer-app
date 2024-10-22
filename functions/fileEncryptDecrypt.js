@@ -1,13 +1,5 @@
 const fs = require('fs');
-const path = require('path');
 const crypto = require('crypto');
-const { app } = require('electron');
-
-const userDir = app.getPath('userData');
-const keysDir = path.join(userDir, 'keys');
-
-// const publicKey = fs.readFileSync(path.join(keysDir, 'public_key.pem'), { encoding: 'utf-8' });
-const privateKey = fs.readFileSync(path.join(keysDir, 'private_key.pem'), { encoding: 'utf-8' });
 
 /**
  * Encrypts a file using RSA public key encryption.

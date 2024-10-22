@@ -18,9 +18,15 @@ async function keyVerifier() {
     if (keyCheckResult.success) {
         document.getElementById("keycheck").style.display = "block";
         document.getElementById("share-key").style.display = "block";
+        document.getElementById("key-init-message").style.display = "none";
+        document.getElementById("upload-btn").style.display = "block";
+        document.getElementById("search-btn").style.display = "block";
     } else {
         document.getElementById("keycheck").style.display = "none";
         document.getElementById("share-key").style.display = "none";
+        document.getElementById("key-init-message").style.display = "block";
+        document.getElementById("upload-btn").style.display = "none";
+        document.getElementById("search-btn").style.display = "none";
     }
 }
 
@@ -221,37 +227,28 @@ document.querySelector("#encrypt-btn").addEventListener("click", async () => {
 
 // File Receiving
 searchBtn.addEventListener('click', async () => {
-    // Set the mouse pointer to load while fetching data.
     document.body.style.cursor = 'wait';
     toggleButtons(true)
-    // Fetch the list of items from the API (assuming each item contains message, sender, and time).
     const items = await window.electronAPI.checkNewFiles();
 
-    // Reset the mouse pointer after fetching data.
     document.body.style.cursor = 'default';
     toggleButtons(false)
 
-    // Clear the existing listbox content.
     listboxItems.innerHTML = '';
 
     if (items.length === 0) {
-        // Display a message if no new files are found.
         const noFilesMessage = document.createElement('p');
         noFilesMessage.textContent = "No new files.";
         listboxItems.appendChild(noFilesMessage);
     } else {
-        // Loop through the received items and create listbox elements.
         items.forEach((item, index) => {
-            // Create a new list item (li) for each item.
             const li = document.createElement('li');
             li.textContent = new Date(item.date).toLocaleString();
             listboxItems.appendChild(li);
 
-            // Add click event listener for each list item.
             li.addEventListener('click', () => {
-                // Populate the item-info-card with the full details of the selected item.
                 document.getElementById('messagefromSender').textContent = item.message;
-                document.getElementById('timeofSending').textContent = new Date(item.date).toLocaleString(); // Format the time nicely
+                document.getElementById('timeofSending').textContent = new Date(item.date).toLocaleString();
                 document.getElementById('download-btn').addEventListener("click", async () => {
                     toggleButtons(true);
                     document.body.style.cursor = 'wait';
@@ -261,7 +258,6 @@ searchBtn.addEventListener('click', async () => {
                         const decryptResult = await window.electronAPI.decryptFile();
                         document.body.style.cursor = 'default';
                         toggleButtons(false);
-                        // Show the save as file dialog
                         if (decryptResult.success) {
                             showCustomAlert("Success", "File Saved successfully");
                         }
@@ -273,7 +269,6 @@ searchBtn.addEventListener('click', async () => {
                 });
 
                 document.getElementById("delete-btn").addEventListener("click", async () => {
-                    // ask for confirmation
                     const response = await window.electronAPI.promptInvoke({ title: "Confirm ?", message: "Are you sure you want to delete this file?" });
 
                     if (!response) {
@@ -299,14 +294,12 @@ searchBtn.addEventListener('click', async () => {
                     overlay.style.display = 'none';
                 });
 
-                // Show the item info card and overlay.
                 itemInfoCard.style.display = 'block';
                 overlay.style.display = 'block';
             });
         });
     }
 
-    // Show the listbox and the hide button.
     listbox.style.display = 'block';
     hideBtn.style.display = 'block';
 });
