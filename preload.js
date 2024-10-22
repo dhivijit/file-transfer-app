@@ -1,14 +1,3 @@
-window.addEventListener('DOMContentLoaded', () => {
-    const replaceText = (selector, text) => {
-        const element = document.getElementById(selector)
-        if (element) element.innerText = text
-    }
-
-    for (const dependency of ['chrome', 'node', 'electron']) {
-        replaceText(`${dependency}-version`, process.versions[dependency])
-    }
-})
-
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -28,4 +17,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     decryptFile: () => ipcRenderer.invoke('decrypt-file'),
     deleteFile: (fileId) => ipcRenderer.invoke('deleteFile', fileId),
     sharePublicKey: () => ipcRenderer.invoke('share-public-key'),
+    authenticate: (key) => ipcRenderer.invoke('authenticate', key),
+    setPassword: (password) => ipcRenderer.invoke('set-password', password),
+    unsetPassword: () => ipcRenderer.invoke('unset-password'),
+    isAuthRequired: () => ipcRenderer.invoke('isAuthRequired'),
 });

@@ -12,8 +12,10 @@ const { newUploadUpdater, getNewFiles, deleteFile } = require("./functions/dbint
 const hashPublicKey = require("./functions/keyhasher");
 const clearDirectory = require("./functions/dircleaner");
 const downloadFile = require("./functions/ipfsdownloader");
+const { encryptRSAKeys, decryptRSAKeys } = require("./functions/keysSecured");
 
 let aboutWindow;
+let authWindow;
 let win;
 
 const userDir = app.getPath('userData');
@@ -26,6 +28,9 @@ const tempDir = path.join(userDir, 'temp');
 if (!fs.existsSync(tempDir)) {
     fs.mkdirSync(tempDir);
 }
+
+var isPasswordRequired;
+var receivedPassword;
 
 const createWindow = () => {
     win = new BrowserWindow({
@@ -91,12 +96,67 @@ const createWindow = () => {
     Menu.setApplicationMenu(menu);
 };
 
+function createAuthWindow() {
+    authWindow = new BrowserWindow({
+        autoHideMenuBar: true,
+        width: 400,
+        height: 200,
+        frame: true,
+        resizable: false,
+        webPreferences: {
+            nodeIntegration: true,
+            preload: path.join(__dirname, 'preload.js')
+        },
+        icon: path.join(__dirname, 'blockchain.png')
+    });
+
+    authWindow.loadFile('auth.html');
+}
+
 app.whenReady().then(() => {
-    createWindow();
+
+    // check if files exist in the keys directory
+    const keysDir = path.join(userDir, 'keys');
+    if (!fs.existsSync(keysDir)) {
+        fs.mkdirSync(keysDir);
+    }
+
+    // check if the files in keysDir ending with .enc. if two files in it have .enc extension, then password is required
+    const files = fs.readdirSync(keysDir);
+    let encFiles = 0;
+    for (const file of files) {
+        if (file.endsWith('.enc')) {
+            encFiles++;
+        }
+    }
+
+    isPasswordRequired = (encFiles === 2) ? true : false;
+
+
+    if (isPasswordRequired) {
+        createAuthWindow();
+    } else {
+        createWindow();
+    }
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
+});
+
+ipcMain.handle('authenticate', async (event, hashedPassword) => {
+    const keysDir = path.join(userDir, 'keys');
+    const authresponse = await decryptRSAKeys(keysDir, hashedPassword);
+
+    if (authresponse.success) {
+        receivedPassword = hashedPassword;
+        // Password is correct, close the auth window and open the main window
+        if (authWindow) authWindow.close();
+        createWindow();
+    } else {
+        // Send a failure message back to the auth window
+        return { success: false, message: 'Incorrect password' };
+    }
 });
 
 ipcMain.handle('show-alert', async (event, { title, message }) => {
@@ -251,13 +311,13 @@ ipcMain.handle('delete-keys', async () => {
             fs.unlinkSync(publicKeyFile);
         }
 
+        isPasswordRequired = false;
+
         return { success: true, message: 'Keys deleted successfully.' };
     } catch (err) {
         return { success: false, message: err.message };
     }
 });
-
-
 
 ipcMain.handle("SaveUserFiles", async (event, files) => {
     try {
@@ -450,6 +510,25 @@ ipcMain.handle('share-public-key', async (event) => {
     }
 });
 
-app.on('window-all-closed', () => {
+ipcMain.handle("isAuthRequired", async (event) => {
+    return isPasswordRequired;
+});
+
+ipcMain.handle("set-password", async (event, password) => {
+    isPasswordRequired = true;
+    receivedPassword = password;
+    return { success: true, message: 'Password set successfully.' };
+});
+
+ipcMain.handle("unset-password", async (event) => {
+    isPasswordRequired = false;
+    return { success: true, message: 'Password removed successfully.' };
+});
+
+app.on('window-all-closed', async () => {
+    if (isPasswordRequired) {
+        const keysDir = path.join(userDir, 'keys');
+        await encryptRSAKeys(keysDir, receivedPassword);
+    }
     if (process.platform !== 'darwin') app.quit();
 });

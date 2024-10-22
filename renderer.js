@@ -21,12 +21,19 @@ async function keyVerifier() {
         document.getElementById("key-init-message").style.display = "none";
         document.getElementById("upload-btn").style.display = "block";
         document.getElementById("search-btn").style.display = "block";
+        document.getElementById("settings").style.display = "block";
+
+        const passwordRequired = await window.electronAPI.isAuthRequired();
+        if (passwordRequired) {
+            document.querySelector("#enable-password-toggle").checked = true;
+        }
     } else {
         document.getElementById("keycheck").style.display = "none";
         document.getElementById("share-key").style.display = "none";
         document.getElementById("key-init-message").style.display = "block";
         document.getElementById("upload-btn").style.display = "none";
         document.getElementById("search-btn").style.display = "none";
+        document.getElementById("settings").style.display = "none";
     }
 }
 
@@ -308,4 +315,37 @@ searchBtn.addEventListener('click', async () => {
 // Share key
 document.querySelector("#share-button").addEventListener("click", async () => {
     await window.electronAPI.sharePublicKey();
+});
+
+// Password Management
+// checkbox type input
+document.querySelector("#enable-password-toggle").addEventListener("change", async () => {
+    const passwordToggle = document.querySelector("#enable-password-toggle");
+    if (!passwordToggle.checked) {
+        const response = await window.electronAPI.unsetPassword();
+        console.log(response);
+    }
+});
+
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+document.querySelector("#password-submit-btn").addEventListener("click", async () => {
+    const passwordInput = document.querySelector("#password-input");
+    const password = passwordInput.value;
+
+    const hashedPassword = await hashPassword(password);
+
+    const response = await window.electronAPI.setPassword(hashedPassword);
+
+    if (response.success) {
+        showCustomAlert("Success", "Password set successfully");
+    } else {
+        showCustomAlert("Error", "Error setting password: " + response.message);
+    }
 });

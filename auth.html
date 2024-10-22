@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication</title>
+</head>
+
+<body>
+    <h1>Enter Password</h1>
+    <input type="password" id="passwordInput" />
+    <button id="submitPassword">Submit</button>
+    <p id="errorMessage" style="color: red;"></p>
+
+    <script>
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hash = await crypto.subtle.digest('SHA-256', data);
+
+            return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        document.getElementById('submitPassword').addEventListener('click', async () => {
+            const password = document.getElementById('passwordInput').value;
+            const hashedPassword = await hashPassword(password);
+
+            const response = await window.electronAPI.authenticate(hashedPassword);
+
+            if (!response.success) {
+                document.getElementById('errorMessage').innerText = "Wrong Password";
+            } else {
+                document.getElementById('errorMessage').innerText = "Authentication Successful";
+            }
+        });
+
+    </script>
+</body>
+
+</html>
