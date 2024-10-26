@@ -5,15 +5,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Authentication</title>
+    <style>
+        #submitPassword {
+            border-radius: 10px;
+            background-color: green;
+            padding: 5px;
+            cursor: pointer;
+            transition: ease 0.3s;
+        }
+
+        #submitPassword:hover {
+            background-color: darkgreen;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Enter Password</h1>
-    <input type="password" id="passwordInput" />
-    <button id="submitPassword">Submit</button>
-    <p id="errorMessage" style="color: red;"></p>
+    <center>
+        <h1 style="font-family: monospace;">Enter Password</h1>
+        <input type="password" id="passwordInput" style="border-radius: 10px;padding: 5px;" />
 
+        <button id="submitPassword">Submit</button>
+        <p id="errorMessage" style="color: red;"></p>
+    </center>
     <script>
+        document.getElementById('passwordInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                document.getElementById('submitPassword').click();
+            }
+        });
+
+
         async function hashPassword(password) {
             const encoder = new TextEncoder();
             const data = encoder.encode(password);

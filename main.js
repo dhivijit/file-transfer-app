@@ -34,11 +34,13 @@ var receivedPassword;
 
 const createWindow = () => {
     win = new BrowserWindow({
+        autoHideMenuBar: true,
         width: 800,
         height: 600,
         webPreferences: {
             nodeIntegration: true,
-            preload: path.join(__dirname, 'preload.js')
+            preload: path.join(__dirname, 'preload.js'),
+            devTools: false
         },
         icon: path.join(__dirname, 'blockchain.png')
     });
@@ -56,7 +58,7 @@ const createWindow = () => {
             label: 'View',
             submenu: [
                 { label: 'Reload', role: 'reload' },
-                { label: 'Toggle Developer Tools', role: 'toggleDevTools' }
+                // { label: 'Toggle Developer Tools', role: 'toggleDevTools' }
             ]
         },
         {
@@ -105,7 +107,8 @@ function createAuthWindow() {
         resizable: false,
         webPreferences: {
             nodeIntegration: true,
-            preload: path.join(__dirname, 'preload.js')
+            preload: path.join(__dirname, 'preload.js'),
+            devTools: false
         },
         icon: path.join(__dirname, 'blockchain.png')
     });

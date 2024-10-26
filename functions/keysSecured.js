@@ -9,7 +9,7 @@ const crypto = require('crypto');
  * @returns {Buffer} - The generated key.
  */
 function generateKey(password, salt) {
-    return crypto.scryptSync(password, salt, 32); // 32 bytes key (256-bit AES)
+    return crypto.scryptSync(password, salt, 32);
 }
 
 /**
@@ -19,7 +19,7 @@ function generateKey(password, salt) {
  * @returns {Object} - Contains encrypted data, initialization vector (iv), and authentication tag (authTag).
  */
 function encryptData(key, data) {
-    const iv = crypto.randomBytes(16); // Initialization vector for AES
+    const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
 
     const encrypted = Buffer.concat([cipher.update(data), cipher.final()]);
@@ -39,15 +39,14 @@ function encryptData(key, data) {
  * @returns {Buffer} - The decrypted data.
  */
 function decryptData(key, encryptedFile) {
-    const salt = encryptedFile.slice(0, 16); // First 16 bytes is the salt
-    const iv = encryptedFile.slice(16, 32); // Next 16 bytes is the IV
-    const authTag = encryptedFile.slice(32, 48); // Next 16 bytes is the Auth Tag
-    const encryptedData = encryptedFile.slice(48); // The rest is the encrypted data
+    const salt = encryptedFile.slice(0, 16);
+    const iv = encryptedFile.slice(16, 32);
+    const authTag = encryptedFile.slice(32, 48);
+    const encryptedData = encryptedFile.slice(48);
 
     const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
     decipher.setAuthTag(authTag);
 
-    // Decrypt the data
     const decrypted = Buffer.concat([decipher.update(encryptedData), decipher.final()]);
 
     return decrypted;
@@ -62,10 +61,9 @@ function decryptData(key, encryptedFile) {
  */
 function encryptRSAKeys(folderPath, password) {
     try {
-        const salt = crypto.randomBytes(16); // Generate a random salt for key derivation
-        const key = generateKey(password, salt); // Derive the key from the password
+        const salt = crypto.randomBytes(16);
+        const key = generateKey(password, salt);
 
-        // Read all files in the folder
         const files = fs.readdirSync(folderPath);
         if (files.length === 0) {
             return { success: false, message: 'No files found in the specified folder.' };
@@ -74,20 +72,15 @@ function encryptRSAKeys(folderPath, password) {
         files.forEach(file => {
             const filePath = path.join(folderPath, file);
             
-            // Read file content
             const fileData = fs.readFileSync(filePath);
 
-            // Encrypt the file content
             const { encryptedData, iv, authTag } = encryptData(key, fileData);
 
-            // Create the final encrypted file structure
             const encryptedFile = Buffer.concat([salt, iv, authTag, encryptedData]);
 
-            // Save the encrypted file (append `.enc` to the filename to indicate it's encrypted)
             const encryptedFilePath = path.join(folderPath, file + '.enc');
             fs.writeFileSync(encryptedFilePath, encryptedFile);
 
-            // Delete the original file after encryption
             fs.unlinkSync(filePath);
         });
 
@@ -107,7 +100,6 @@ function encryptRSAKeys(folderPath, password) {
  */
 function decryptRSAKeys(folderPath, password) {
     try {
-        // Read all files in the folder
         const files = fs.readdirSync(folderPath);
         if (files.length === 0) {
             return { success: false, message: 'No files found in the specified folder.' };
@@ -122,22 +114,17 @@ function decryptRSAKeys(folderPath, password) {
                 return;
             }
 
-            // Read the encrypted file content
             const encryptedFile = fs.readFileSync(filePath);
 
-            // Extract the salt from the encrypted file (first 16 bytes)
             const salt = encryptedFile.slice(0, 16);
-            const key = generateKey(password, salt); // Derive the key from the password and salt
+            const key = generateKey(password, salt);
 
             try {
-                // Decrypt the file content
                 const decryptedData = decryptData(key, encryptedFile);
 
-                // Save the decrypted data (remove `.enc` extension)
                 const decryptedFilePath = path.join(folderPath, path.basename(file, '.enc'));
                 fs.writeFileSync(decryptedFilePath, decryptedData);
 
-                // Delete the encrypted file after decryption
                 fs.unlinkSync(filePath);
 
             } catch (error) {
